@@ -1,9 +1,9 @@
 import os, asyncio, threading, random
 from flask import Flask, request, jsonify
 from datetime import datetime
-from cfonts import render, say
+from cfonts import render
 
-# Import tumhare original modules
+# Original modules
 from xC4 import *
 from xHeaders import *
 from Pb2 import DEcwHisPErMsG_pb2, MajoRLoGinrEs_pb2, PorTs_pb2, MajoRLoGinrEq_pb2, sQ_pb2, Team_msg_pb2
@@ -17,13 +17,18 @@ def get_random_color():
     ]
     return random.choice(colors)
 
-# Sample /join route
 @app.route('/join')
 def join_team():
     team_code = request.args.get('tc')
+    emote_id_str = request.args.get('emote_id')
+
+    # UID parameters (supporting 6)
     uid1 = request.args.get('uid1')
     uid2 = request.args.get('uid2')
-    emote_id_str = request.args.get('emote_id')
+    uid3 = request.args.get('uid3')
+    uid4 = request.args.get('uid4')
+    uid5 = request.args.get('uid5')
+    uid6 = request.args.get('uid6')
 
     if not team_code or not emote_id_str:
         return jsonify({"status": "error", "message": "Missing tc or emote_id"})
@@ -33,7 +38,7 @@ def join_team():
     except:
         return jsonify({"status": "error", "message": "emote_id must be integer"})
 
-    uids = [uid for uid in [uid1, uid2] if uid]
+    uids = [uid for uid in [uid1, uid2, uid3, uid4, uid5, uid6] if uid]
 
     if not uids:
         return jsonify({"status": "error", "message": "Provide at least one UID"})
@@ -46,7 +51,7 @@ def join_team():
         "status": "success",
         "team_code": team_code,
         "uids": uids,
-        "emote_id": emote_id_str,
+        "emote_id": emote_id,
         "message": "Emote triggered"
     })
 
@@ -60,13 +65,18 @@ async def perform_emote(team_code: str, uids: list, emote_id: int):
     if online_writer is None:
         raise Exception("Bot not connected")
     try:
+        # Join squad
         EM = await GenJoinSquadsPacket(team_code, key, iv)
         await SEndPacKeT(None, online_writer, 'OnLine', EM)
         await asyncio.sleep(0.12)
+
+        # Perform emote for all UIDs
         for uid_str in uids:
             uid = int(uid_str)
             H = await Emote_k(uid, emote_id, key, iv, region)
             await SEndPacKeT(None, online_writer, 'OnLine', H)
+
+        # Leave squad
         LV = await ExiT(BOT_UID, key, iv)
         await SEndPacKeT(None, online_writer, 'OnLine', LV)
         await asyncio.sleep(0.03)
